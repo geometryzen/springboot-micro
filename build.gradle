@@ -1,39 +1,74 @@
 buildscript {
+	// Customize manged versions
 	ext {
 		springBootVersion     = "2.0.1.RELEASE"
-		gradleDockerVersion   = "1.2"
+		// gradleDockerVersion   = "1.2"
 	}
 	repositories {
 		mavenCentral()
 	}
 	dependencies {
+		// Spring Boot Gradle Plugin provides Spring Boot support in Gradle.
+		// https://docs.spring.io/spring-boot/docs/current-SNAPSHOT/gradle-plugin/reference/html/
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-		classpath("se.transmode.gradle:gradle-docker:${gradleDockerVersion}")
+		// Gradle Docker plugin
+		// https://github.com/Transmode/gradle-docker
+		// classpath("se.transmode.gradle:gradle-docker:${gradleDockerVersion}")
+		// This does not seem to exist on maven2. Neither in gradle folder nor palantir
+		classpath('gradle.plugin.com.palantir.gradle.docker:gradle-docker:0.19.2')
 	}
 }
 
+// The two minimum plugins in a typical Spring Boot application:
 apply plugin: "java"
-apply plugin: "application"
-apply plugin: "docker"
-apply plugin: "org.springframework.boot"
 apply plugin: "io.spring.dependency-management"
+// What does this do?
+// The Application plugin facilitates creating an executable JVM application.
+// It makes it easy to start the application locally during development, and to package the application
+// as a TAR and/or ZIP including operating system specific start scripts.
+// https://docs.gradle.org/current/userguide/application_plugin.html
+// Applying the Application plugin also implicitly applies the Java plugin.
+// The only mandatory configuration for the plugin is the specification of the main class (i.e. entry point) of the application.
+apply plugin: "application"
+// apply plugin: "docker"
+apply plugin "com.palantir.docker"
+apply plugin: "org.springframework.boot"
 
 compileJava {
+	// Why do some samples put these at the root level?
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
     mainClassName       = "hello.Application"
 }
 
+// What is difference between jar and bootJar?
+// Without either of these we, build creates ./build/libs/springboot-micro.jar
+//
+// Using bootJar we create ./build/libs/${baseName}-${version}.jar
+// When bootJar task is configured, the jar task is disabled.
+// bootJar is a subclass  of jar, so extends its properties.
+// Specifying the main class does not seem to be required (maybe because it's not ambiguous?)
+bootJar {
+	baseName = 'my-springboot-micro-base-name'
+	version = '0.1.0'
+}
+/*
 jar {
     baseName = "microservice"
     group    = "com.geometryzen"
     version  = "0.1.0"
     manifest { attributes "Main-Class": "hello.Application" }
 }
+*/
 
+// Configuring the Gradle Docker Plugin
 docker {
-    baseImage "frolvlad/alpine-oraclejdk8:slim"
-    maintainer 'David Geo Holmes "david.geo.holmes@gmail.com"'
+	dependsOn build
+    name "${project.group}/${bootJar.baseName}"
+    files bootJar.archivePath
+    buildArgs(['JAR_FILE': "${bootJar.archiveName}"])
+    // baseImage "frolvlad/alpine-oraclejdk8:slim"
+    // maintainer 'David Geo Holmes "david.geo.holmes@gmail.com"'
 }
 
 repositories {
@@ -41,7 +76,8 @@ repositories {
 }
 
 dependencies {
+	// Versions aren't used because they come from the BOM for the Spring Boot version.
 	compile("org.springframework.boot:spring-boot-starter-web")
 	testCompile("org.springframework.boot:spring-boot-starter-test")
-	testCompile("junit:junit")
+	// testCompile("junit:junit")
 }

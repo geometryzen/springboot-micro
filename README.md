@@ -1,5 +1,7 @@
 # springboot-micro
 
+http://samatkinson.com/why-i-hate-spring/
+
 Spring Boot Microservice
 
 The following will put gradle on your path, allowing the wrapper to be created.
@@ -11,9 +13,13 @@ gradle wrapper
 
 ./gradlew clean build
 
-The following does not work:
+## Building the Docker image using the docker plugin
 
-gradle build distDocker --refresh-dependencies
+The following command creates the image but it fails with "Error: Could not find or load main class hello.Application"
+
+./gradlew clean build distDocker --refresh-dependencies
+
+## Building the Docker image conventionally
 
 But this does work:
 
@@ -26,3 +32,9 @@ docker rm -f gracious_newton
 docker run --name="belfastjug-A" --publish 9001:8080 belfastjug
 
 docker rm -f belfastjug-A
+
+## References
+
+https://spring.io/projects
+
+https://spring.io/guides
