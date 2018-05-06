@@ -1,0 +1,47 @@
+buildscript {
+	ext {
+		springBootVersion     = "2.0.1.RELEASE"
+		gradleDockerVersion   = "1.2"
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+		classpath("se.transmode.gradle:gradle-docker:${gradleDockerVersion}")
+	}
+}
+
+apply plugin: "java"
+apply plugin: "application"
+apply plugin: "docker"
+apply plugin: "org.springframework.boot"
+apply plugin: "io.spring.dependency-management"
+
+compileJava {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    mainClassName       = "hello.Application"
+}
+
+jar {
+    baseName = "microservice"
+    group    = "com.geometryzen"
+    version  = "0.1.0"
+    manifest { attributes "Main-Class": "hello.Application" }
+}
+
+docker {
+    baseImage "frolvlad/alpine-oraclejdk8:slim"
+    maintainer 'David Geo Holmes "david.geo.holmes@gmail.com"'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile("org.springframework.boot:spring-boot-starter-web")
+	testCompile("org.springframework.boot:spring-boot-starter-test")
+	testCompile("junit:junit")
+}
